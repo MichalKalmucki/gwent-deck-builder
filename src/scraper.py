@@ -117,7 +117,7 @@ def scrape_gwent_data(sleep: bool = False):
     # gwent page has weird way of saving secondary factions with non given enum
     faction_map = {
         1: "monsters",
-        2: "nilfgard",
+        2: "nilfgaard",
         3: "northernrealms",
         4: "scoiatael",
         5: "skellige",
