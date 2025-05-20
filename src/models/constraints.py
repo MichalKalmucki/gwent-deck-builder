@@ -24,9 +24,9 @@ def check_constraints(deck: list[Card], faction: Faction, leader_ability: str) -
         print("Provision limit exceeded")
         return False
 
-    # if len(deck) > 25:
-    #     print("Deck length exceeded")
-    #     return False
+    if len(deck) > 25:
+        print("Deck length exceeded")
+        return False
 
     unit_count = sum(1 for card in deck if card.type == "unit")
     if unit_count < 13:
