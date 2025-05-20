@@ -7,17 +7,37 @@ from src.models.deck import Deck
 
 
 class Fitness:
+    """
+    ## A class to evaluate the synergy and quality of Gwent decks using co-occurrence and usage data.
+
+    This class internally loads card metadata and computes several private co-occurrence statistics:
+    - Normalized card-to-card co-occurrence matrix based on historical deck data.
+    - Normalized co-occurrence of cards with leader abilities.
+    - Normalized co-occurrence of cards with stratagems.
+    - Normalized card usage frequencies.
+
+    The core functionality is to calculate a fitness score for a given deck. The score reflects:
+    - Synergy between card pairs.
+    - Overall popularity and frequency of individual cards.
+    - Compatibility of cards with the selected leader ability.
+    - Compatibility of cards with the selected stratagem.
+
+    ### Methods:
+        fitness(deck: Deck) -> float:
+            Computes the fitness score of a deck by aggregating synergy, popularity,
+            and alignment with leader ability and stratagem.
+    """
+
     def __init__(self):
-        self.card_df = self.__read_card_df()
-        self.card_occurances = self.__calculate_card_ocurance()
-        self.normalized_occurances = self.__normalize_card_occurances(
-            self.card_occurances
+        self.__card_occurances = self.__calculate_card_ocurance()
+        self.__normalized_occurances = self.__normalize_card_occurances(
+            self.__card_occurances
         )
-        self.cooccurrence_matrix = self.__calculate_card_cooccurrence_matrix(
-            self.normalized_occurances
+        self.__cooccurrence_matrix = self.__calculate_card_cooccurrence_matrix(
+            self.__normalized_occurances
         )
-        self.card_leader_cooccurrence = self.__calculate_card_leader_cooccurrence()
-        self.card_stratagem_cooccurrence = (
+        self.__card_leader_cooccurrence = self.__calculate_card_leader_cooccurrence()
+        self.__card_stratagem_cooccurrence = (
             self.__calculate_card_stratagem_cooccurrence()
         )
 
@@ -48,8 +68,10 @@ class Fitness:
             card_i_count = card_frequency.get(card_i, 0)
             score += card_i_count
 
-            leader_score = self.card_leader_cooccurrence.get(card_i, {}).get(leader, 0)
-            stratagem_score = self.card_stratagem_cooccurrence.get(card_i, {}).get(
+            leader_score = self.__card_leader_cooccurrence.get(card_i, {}).get(
+                leader, 0
+            )
+            stratagem_score = self.__card_stratagem_cooccurrence.get(card_i, {}).get(
                 stratagem, 0
             )
 
@@ -59,10 +81,10 @@ class Fitness:
             for j in range(i + 1, len(deck.cards)):
                 card_j = deck.cards[j].id
                 if (
-                    card_i in self.cooccurrence_matrix.index
-                    and card_j in self.cooccurrence_matrix.columns
+                    card_i in self.__cooccurrence_matrix.index
+                    and card_j in self.__cooccurrence_matrix.columns
                 ):
-                    score += self.cooccurrence_matrix.loc[card_i, card_j]
+                    score += self.__cooccurrence_matrix.loc[card_i, card_j]
 
         return score
 
