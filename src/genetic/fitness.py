@@ -34,7 +34,7 @@ class Fitness:
             self.__card_occurances
         )
         self.__cooccurrence_matrix = self.__calculate_card_cooccurrence_matrix(
-            self.__normalized_occurances
+            self.__card_occurances
         )
         self.__card_leader_cooccurrence = self.__calculate_card_leader_cooccurrence()
         self.__card_stratagem_cooccurrence = (
@@ -56,16 +56,13 @@ class Fitness:
             float: Fitness score.
         """
         score = 0
-        card_frequency = {}
-        for card in deck.cards:
-            card_frequency[card.id] = card_frequency.get(card.id, 0) + 1
 
         leader = deck.leader_ability
         stratagem = deck.stratagem
 
         for i in range(len(deck.cards)):
             card_i = deck.cards[i].id
-            card_i_count = card_frequency.get(card_i, 0)
+            card_i_count = self.__normalized_occurances.get(card_i, 0)
             score += card_i_count
 
             leader_score = self.__card_leader_cooccurrence.get(card_i, {}).get(
@@ -87,11 +84,6 @@ class Fitness:
                     score += self.__cooccurrence_matrix.loc[card_i, card_j]
 
         return score
-
-    def __read_card_df(self):
-        card_df = pd.read_csv("data/card_database.csv")
-        card_df.set_index("id", inplace=True)
-        return card_df
 
     def __calculate_card_ocurance(self, deck_dir: str = "data/decks"):
         """
@@ -140,7 +132,7 @@ class Fitness:
         return normalized_occurrences
 
     def __calculate_card_cooccurrence_matrix(
-        card_frequency: dict, deck_dir: str = "data/decks"
+        self, card_frequency: dict, deck_dir: str = "data/decks"
     ):
         """
         Generates a co-occurrence matrix of cards based on decks in the specified directory.
@@ -155,7 +147,7 @@ class Fitness:
                         count of card i and card j across all decks, normalized by card frequency.
         """
         card_cooccurrence = {}
-
+        print(deck_dir)
         deck_files = os.listdir(deck_dir)
         deck_json_files = [file for file in deck_files if file.endswith(".json")]
 
@@ -198,7 +190,7 @@ class Fitness:
 
         return cooccurrence_matrix
 
-    def __calculate_card_leader_cooccurrence(deck_dir: str = "data/decks"):
+    def __calculate_card_leader_cooccurrence(self, deck_dir: str = "data/decks"):
         """
         Calculates and normalizes the co-occurrence frequency between cards and leader abilities
         across all deck JSON files in the specified directory.
@@ -243,7 +235,7 @@ class Fitness:
 
         return normalized_counts
 
-    def __calculate_card_stratagem_cooccurrence(deck_dir: str = "data/decks"):
+    def __calculate_card_stratagem_cooccurrence(self, deck_dir: str = "data/decks"):
         """
         Calculates and normalizes the co-occurrence frequency between cards and stratagems
         across all deck JSON files in the specified directory.
