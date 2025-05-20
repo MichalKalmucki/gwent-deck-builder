@@ -4,8 +4,11 @@ import json
 import pandas as pd
 
 
+from collections import Counter
+
+
 class Deck:
-    def __init__(self, leader_ability: str, stratagem: str, cards: list):
+    def __init__(self, leader_ability: str, stratagem: str, cards: list, faction):
         """
         Represents a Gwent deck.
 
@@ -13,16 +16,66 @@ class Deck:
             leader_ability (str): The leader ability used in the deck.
             stratagem (str): The stratagem selected for the deck.
             cards (list[Card]): A list of Card objects included in the deck.
+            faction (Faction): The faction the deck belongs to.
         """
         self.leader_ability = leader_ability
         self.stratagem = stratagem
         self.cards = cards
+        self.faction = faction
 
     def __repr__(self):
         return (
             f"Leader: {self.leader_ability}, Stratagem: {self.stratagem}, "
             f"Cards: {len(self.cards)} cards"
         )
+
+    def is_feasible(self) -> bool:
+        """
+        Validates the deck against faction rules and leader ability constraints.
+
+        Returns:
+            bool: True if the deck meets all constraints, False otherwise.
+        """
+        if self.leader_ability not in self.faction.leader_abilities:
+            return False
+
+        provision_limit = self.faction.leader_abilities[self.leader_ability] + 150
+        total_provision = sum(card.provision for card in self.cards)
+        if total_provision > provision_limit:
+            print("Provision limit exceeded")
+            return False
+
+        if len(self.cards) != 25:
+            print("Deck length mismatch")
+            return False
+
+        unit_count = sum(1 for card in self.cards if card.type == "unit")
+        if unit_count < 13:
+            print("Too few units")
+            return False
+
+        count_by_id = Counter(card.id for card in self.cards)
+        for card in self.cards:
+            count = count_by_id[card.id]
+            if card.group == "bronze" and count > 2:
+                print("More than 2 copies of a bronze card")
+                return False
+            if card.group == "gold" and count > 1:
+                print("More than 1 copy of a gold card")
+                return False
+
+            if card.faction != self.faction.name:
+                if (
+                    card.faction != "neutral"
+                    and card.secondary_faction != self.faction.name
+                ):
+                    print(
+                        f"Card: {card.name} faction not matching leader ability "
+                        f"({card.faction}, {card.secondary_faction})"
+                    )
+                    return False
+
+        return True
 
 
 def load_deck_from_json(deck_path: str, card_df: pd.DataFrame) -> Deck:
