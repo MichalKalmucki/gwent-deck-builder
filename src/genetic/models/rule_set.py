@@ -30,7 +30,7 @@ class RuleSet:
         more = f", ... (+{len(self.rules) - 5} more)" if len(self.rules) > 5 else ""
         return f"<RuleSet with {len(self.rules)} rules: [\n  {rules_preview}{more}\n]>"
     
-    def mutate(self, card_pool: pd.DataFrame, factions: list[Faction], stratagems: list, mutation_rate=0.5):
+    def mutate(self, card_pool: pd.DataFrame, factions: list[Faction], stratagems: list, mutation_rate=0.1):
         new_rules = []
         for rule in self.rules:
             if random.random() < mutation_rate:
@@ -105,8 +105,9 @@ def print_ruleset_with_names(ruleset: RuleSet, card_df: pd.DataFrame) -> None:
     )
 
 def crossover(parent1: RuleSet, parent2: RuleSet) -> RuleSet:
-    cut_start = random.randint(0, 80)
-    cut_end = cut_start + 30  # Take a 20-rule slice
+    length = len(parent1)
+    cut_start = random.randint(0, 0.8*length)
+    cut_end = cut_start + 0.3*length  # Take a 20-rule slice
     initial_rules = parent1.rules[cut_start:cut_end]
 
     seen = {id(rule) for rule in initial_rules}
@@ -114,18 +115,18 @@ def crossover(parent1: RuleSet, parent2: RuleSet) -> RuleSet:
 
     # unique rules from parent2
     for rule in parent2.rules:
-        if id(rule) not in seen and len(new_rules) < 100:
+        if id(rule) not in seen and len(new_rules) < length:
             new_rules.append(rule)
             seen.add(id(rule))
 
     # unique rules from parent1
     for rule in parent1.rules:
-        if id(rule) not in seen and len(new_rules) < 100:
+        if id(rule) not in seen and len(new_rules) < length:
             new_rules.append(rule)
             seen.add(id(rule))
 
     # pad with random rules
-    while len(new_rules) < 100:
+    while len(new_rules) < length:
         filler = random.choice(parent1.rules + parent2.rules)
         if id(filler) not in seen:
             new_rules.append(filler)
