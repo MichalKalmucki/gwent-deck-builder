@@ -45,6 +45,7 @@ def add_card_bayesian(deck: Deck, card_pool):
             return deck_copy
         else: 
             deck_copy.cards.pop()
+    deck_copy = add_card_uniform(deck, card_pool)
 
-    return deck
+    return deck_copy
 
