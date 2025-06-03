@@ -2,6 +2,8 @@ from src.models.deck import Deck
 from src.models.faction import Faction
 from src.genetic.models.rule import Rule, create_random_rule
 import pandas as pd
+import random
+import copy
 
 
 class RuleSet:
@@ -27,6 +29,16 @@ class RuleSet:
         rules_preview = ",\n  ".join(repr(rule) for rule in self.rules[:5])
         more = f", ... (+{len(self.rules) - 5} more)" if len(self.rules) > 5 else ""
         return f"<RuleSet with {len(self.rules)} rules: [\n  {rules_preview}{more}\n]>"
+    
+    def mutate(self, card_pool: pd.DataFrame, factions: list[Faction], stratagems: list, mutation_rate=0.5):
+        new_rules = []
+        for rule in self.rules:
+            if random.random() < mutation_rate:
+                new_rule = create_random_rule(card_pool, factions, stratagems)
+                new_rules.append(new_rule)
+            else:
+                new_rules.append(copy.deepcopy(rule))
+        return RuleSet(new_rules)
 
 
 def create_random_rule_set(
@@ -91,3 +103,31 @@ def print_ruleset_with_names(ruleset: RuleSet, card_df: pd.DataFrame) -> None:
             else ""
         )
     )
+
+def crossover(parent1: RuleSet, parent2: RuleSet) -> RuleSet:
+    cut_start = random.randint(0, 80)
+    cut_end = cut_start + 30  # Take a 20-rule slice
+    initial_rules = parent1.rules[cut_start:cut_end]
+
+    seen = {id(rule) for rule in initial_rules}
+    new_rules = initial_rules[:]
+
+    # unique rules from parent2
+    for rule in parent2.rules:
+        if id(rule) not in seen and len(new_rules) < 100:
+            new_rules.append(rule)
+            seen.add(id(rule))
+
+    # unique rules from parent1
+    for rule in parent1.rules:
+        if id(rule) not in seen and len(new_rules) < 100:
+            new_rules.append(rule)
+            seen.add(id(rule))
+
+    # pad with random rules
+    while len(new_rules) < 100:
+        filler = random.choice(parent1.rules + parent2.rules)
+        if id(filler) not in seen:
+            new_rules.append(filler)
+            seen.add(id(filler))
+    return RuleSet(new_rules)
