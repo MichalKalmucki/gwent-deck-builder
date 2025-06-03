@@ -54,3 +54,40 @@ def create_random_rule_set(
         create_random_rule(card_pool, factions, stratagems) for _ in range(num_rules)
     ]
     return RuleSet(rules=rules)
+
+
+def print_ruleset_with_names(ruleset: RuleSet, card_df: pd.DataFrame) -> None:
+    def get_card_name(card_id):
+        if card_id in card_df.index:
+            return card_df.loc[card_id, "name"]
+        return str(card_id)
+
+    lines = []
+    for i, rule in enumerate(ruleset.rules):
+        cond = {}
+        for k, v in rule.conditions.items():
+            if k in ("has_card", "not_has_card"):
+                cond[k] = get_card_name(v)
+            else:
+                cond[k] = v
+
+        action = {}
+        for k, v in rule.action.items():
+            if k == "add_card":
+                action[k] = get_card_name(v)
+            else:
+                action[k] = v
+
+        cond_str = ", ".join(f"{k}={v!r}" for k, v in cond.items())
+        action_str = ", ".join(f"{k}={v!r}" for k, v in action.items())
+        lines.append(f"<Rule(conditions={{ {cond_str} }}, action={{ {action_str} }})>")
+
+    print(f"RuleSet with {len(ruleset.rules)} rules:")
+    print(
+        "\n".join(lines[:10])
+        + (
+            f"\n... (+{len(ruleset.rules) - 10} more)"
+            if len(ruleset.rules) > 10
+            else ""
+        )
+    )

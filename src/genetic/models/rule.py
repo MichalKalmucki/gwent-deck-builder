@@ -80,10 +80,12 @@ def create_random_rule(
     Returns:
         Rule: A Rule object containing the generated conditions and the action to add a card.
     """
+    conditions = {}
     faction = random.choice(factions)
-    leader = random.choice(list(faction.leader_abilities.keys()))
 
-    conditions = {"leader": leader}
+    if random.random() < 0.5:
+        leader = random.choice(list(faction.leader_abilities.keys()))
+        conditions["leader"] = leader
 
     # TODO: implement stratagem class and relation with Faction class (each faction has 1 own specific stratagem apart from neutrals)
     # if random.random() < 1 and stratagems:
@@ -92,8 +94,10 @@ def create_random_rule(
     max_leftover = 150
     leftover_min = random.randint(0, max_leftover)
     leftover_max = random.randint(leftover_min, max_leftover)
-    conditions["leftover_provision_min"] = leftover_min
-    conditions["leftover_provision_max"] = leftover_max
+    if random.random() < 0.5:
+        conditions["leftover_provision_min"] = leftover_min
+    if random.random() < 0.1:
+        conditions["leftover_provision_max"] = leftover_max
 
     candidates = card_pool[
         (card_pool["faction"] == faction.name)
@@ -103,10 +107,9 @@ def create_random_rule(
     if candidates.empty:
         candidates = card_pool
 
-    if random.random() < 0.5:
-        has_card_candidate = candidates.sample(1).iloc[0]
-        card_id = has_card_candidate.name
-        conditions["has_card"] = card_id
+    has_card_candidate = candidates.sample(1).iloc[0]
+    card_id = has_card_candidate.name
+    conditions["has_card"] = card_id
 
     card_row = candidates.sample(1).iloc[0]
     card_id = card_row.name
