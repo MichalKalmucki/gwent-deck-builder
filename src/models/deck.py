@@ -2,13 +2,15 @@ from src.models.card import Card
 from typing import List
 import json
 import pandas as pd
-
+from src.models.faction import Faction
 
 from collections import Counter
 
 
 class Deck:
-    def __init__(self, leader_ability: str, stratagem: str, cards: list, faction):
+    def __init__(
+        self, leader_ability: str, stratagem: str, cards: list, faction: Faction
+    ):
         """
         Represents a Gwent deck.
 
@@ -24,9 +26,19 @@ class Deck:
         self.faction = faction
 
     def __repr__(self):
+        card_counts = Counter(self.cards)
+        unique_cards = list(card_counts.keys())
+        sorted_cards = sorted(unique_cards, key=lambda c: c.provision, reverse=True)
+
+        card_lines = "\n  ".join(
+            f"- {card} x{card_counts[card]}" if card_counts[card] > 1 else f"- {card}"
+            for card in sorted_cards
+        )
+
         return (
             f"Leader: {self.leader_ability}, Stratagem: {self.stratagem}, "
-            f"Cards: {len(self.cards)} cards"
+            f"Cards:\n"
+            f"  {card_lines}"
         )
 
     def is_feasible(self) -> bool:

@@ -31,3 +31,9 @@ class Card:
 
     def __repr__(self):
         return f"{self.name} (Prov: {self.provision})"
+
+    def __eq__(self, other):
+        return isinstance(other, Card) and self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
