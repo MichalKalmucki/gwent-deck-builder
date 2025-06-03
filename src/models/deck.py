@@ -41,7 +41,7 @@ class Deck:
             f"  {card_lines}"
         )
 
-    def is_feasible(self) -> bool:
+    def is_feasible(self, verbose=False) -> bool:
         if self.leader_ability not in self.faction.leader_abilities:
             return False
 
@@ -52,22 +52,26 @@ class Deck:
         # Reserve provision for remaining slots
         min_remaining_provision = 4 * missing_cards
         if total_provision + min_remaining_provision > provision_limit:
-            print("Provision limit exceeded (considering future cards)")
+            if verbose:
+                print("Provision limit exceeded (considering future cards)")
             return False
 
         unit_count = sum(1 for card in self.cards if card.type == "unit")
         if missing_cards + unit_count < 13:
-            print("Too few units possible even with future cards")
+            if verbose:
+                print("Too few units possible even with future cards")
             return False
 
         count_by_id = Counter(card.id for card in self.cards)
         for card in self.cards:
             count = count_by_id[card.id]
             if card.group == "bronze" and count > 2:
-                print("More than 2 copies of a bronze card")
+                if verbose:
+                    print("More than 2 copies of a bronze card")
                 return False
             if card.group == "gold" and count > 1:
-                print("More than 1 copy of a gold card")
+                if verbose:
+                    print("More than 1 copy of a gold card")
                 return False
 
             if card.faction != self.faction.name:
@@ -75,10 +79,11 @@ class Deck:
                     card.faction != "neutral"
                     and card.secondary_faction != self.faction.name
                 ):
-                    print(
-                        f"Card: {card.name} faction not matching leader ability "
-                        f"({card.faction}, {card.secondary_faction})"
-                    )
+                    if verbose:
+                        print(
+                            f"Card: {card.name} faction not matching leader ability: {self.leader_ability} "
+                            f"({card.faction}, {card.secondary_faction})"
+                        )
                     return False
 
         return True
