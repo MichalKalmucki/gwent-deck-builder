@@ -48,13 +48,29 @@ def add_card_bayesian(deck: Deck, card_pool):
         return deck
 
     fit = Fitness()
-    norm_counts = fit.__normalized_occurances
+    c_matrix = fit.__cooccurrence_matrix 
+
+    card_scores = defaultdict(float)
+
+    # Aggregate conditional probabilities from existing cards
+    for existing_card in deck:
+        if existing_card.id in c_matrix.index:
+            for candidate in c_matrix.columns:
+                card_scores[candidate] += c_matrix.iloc[existing_card.id, candidate] 
+
+    # Normalize scores
+    total_score = sum(card_scores.values())
+    if total_score == 0:
+        add_card_uniform(deck, card_pool)
+        return deck
+
+    candidates = list(card_scores.keys())
+    weights = [card_scores[card] / total_score for card in candidates]
 
     deck_copy = Deck(deck.leader_ability, deck.stratagem, deck.cards, deck.faction)
-
     attempts = 100
     for _ in range(attempts):
-        card = random.choices(card_pool, weights=norm_counts, k=1)[0]
+        card = random.choices(card_pool, weights=weights, k=1)[0]
         deck_copy.cards.extend(card)
         if deck_copy.is_feasible():
             return deck_copy
