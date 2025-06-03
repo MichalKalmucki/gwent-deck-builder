@@ -42,28 +42,22 @@ class Deck:
         )
 
     def is_feasible(self) -> bool:
-        """
-        Validates the deck against faction rules and leader ability constraints.
-
-        Returns:
-            bool: True if the deck meets all constraints, False otherwise.
-        """
         if self.leader_ability not in self.faction.leader_abilities:
             return False
 
         provision_limit = self.faction.leader_abilities[self.leader_ability] + 150
         total_provision = sum(card.provision for card in self.cards)
-        if total_provision > provision_limit:
-            print("Provision limit exceeded")
-            return False
+        missing_cards = 25 - len(self.cards)
 
-        if len(self.cards) != 25:
-            print("Deck length mismatch")
+        # Reserve provision for remaining slots
+        min_remaining_provision = 4 * missing_cards
+        if total_provision + min_remaining_provision > provision_limit:
+            print("Provision limit exceeded (considering future cards)")
             return False
 
         unit_count = sum(1 for card in self.cards if card.type == "unit")
-        if unit_count < 13:
-            print("Too few units")
+        if missing_cards + unit_count < 13:
+            print("Too few units possible even with future cards")
             return False
 
         count_by_id = Counter(card.id for card in self.cards)
