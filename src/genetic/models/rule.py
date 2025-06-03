@@ -39,19 +39,19 @@ class Rule:
         if not card_id or len(deck.cards) >= 25:
             return False
 
-        card_row = card_pool.loc[card_pool["id"] == card_id]
-        if card_row.empty:
+        if card_id not in card_pool.index:
             return False
 
-        provision = int(card_row.iloc[0]["provision"])
+        card_row = card_pool.loc[card_id]
+
         card = Card(
-            id=card_row.iloc[0]["id"],
-            name=card_row.iloc[0]["name"],
-            provision=provision,
-            group=card_row.iloc[0]["group"],
-            type=card_row.iloc[0]["type"],
-            faction=card_row.iloc[0]["faction"],
-            secondary_faction=card_row.iloc[0].get("secondary_faction"),
+            id=card_id,
+            name=card_row["name"],
+            provision=int(card_row["provision"]),
+            group=card_row["group"],
+            type=card_row["type"],
+            faction=card_row["faction"],
+            secondary_faction=card_row.get("secondary_faction"),
         )
 
         deck.cards.append(card)
@@ -82,10 +82,8 @@ def create_random_rule(
     """
     conditions = {}
     faction = random.choice(factions)
-
-    if random.random() < 0.5:
-        leader = random.choice(list(faction.leader_abilities.keys()))
-        conditions["leader"] = leader
+    leader = random.choice(list(faction.leader_abilities.keys()))
+    conditions["leader"] = leader
 
     # TODO: implement stratagem class and relation with Faction class (each faction has 1 own specific stratagem apart from neutrals)
     # if random.random() < 1 and stratagems:
@@ -94,10 +92,10 @@ def create_random_rule(
     max_leftover = 150
     leftover_min = random.randint(0, max_leftover)
     leftover_max = random.randint(leftover_min, max_leftover)
-    if random.random() < 0.5:
-        conditions["leftover_provision_min"] = leftover_min
-    if random.random() < 0.1:
-        conditions["leftover_provision_max"] = leftover_max
+    # if random.random() < 0.5:
+    #     conditions["leftover_provision_min"] = leftover_min
+    # if random.random() < 0.1:
+    #     conditions["leftover_provision_max"] = leftover_max
 
     candidates = card_pool[
         (card_pool["faction"] == faction.name)
