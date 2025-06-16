@@ -10,6 +10,7 @@ from src.genetic.evaluate import evaluate_rule_set
 from src.genetic.fitness import Fitness
 import pandas as pd
 from src.genetic.evolutionary import evolutionary_algorithm
+import pickle
 
 
 def main():
@@ -33,7 +34,7 @@ def main():
     # print_ruleset_with_names(rs_cross, card_df)
 
     # # MUTATE
-    # rs = rs.mutate(card_df, factions, stratagems, mutation_rate=0.1)
+    # rs = rs.mutate(card_df, factions, stratagems, impact=1)
     # print_ruleset_with_names(rs, card_df)
 
     # # RULESET FITNESS
@@ -47,9 +48,10 @@ def main():
         stratagems=stratagems,
         fitness_evaluator=fitness_evaluator,
         population_size=20,
-        generations=50,
+        generations=500,
         rule_count=100,
-        mutation_rate=0.1,
+        mutation_rate=0.2,
+        crossover_rate=0.3,
         tournament_size=3,
     )
     print_ruleset_with_names(best_ruleset, card_df)

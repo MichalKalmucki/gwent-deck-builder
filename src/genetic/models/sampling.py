@@ -48,7 +48,7 @@ def add_card_bayesian(deck: Deck, card_pool):
         return deck
 
     fit = Fitness()
-    c_matrix = fit.__cooccurrence_matrix 
+    c_matrix = fit._Fitness__cooccurrence_matrix 
 
     card_scores = defaultdict(float)
 

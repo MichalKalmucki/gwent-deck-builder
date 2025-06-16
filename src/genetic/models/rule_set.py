@@ -38,15 +38,56 @@ class RuleSet:
         card_pool: pd.DataFrame,
         factions: list[Faction],
         stratagems: list,
-        mutation_rate=0.1,
+        impact=0.1,
     ):
         new_rules = []
+        all_card_ids = list(card_pool.index)
+
         for rule in self.rules:
-            if random.random() < mutation_rate:
+            r = random.random()
+            if r < impact / 10:
                 new_rule = create_random_rule(card_pool, factions, stratagems)
                 new_rules.append(new_rule)
-            else:
-                new_rules.append(copy.deepcopy(rule))
+            elif r < impact:
+                rule = copy.deepcopy(rule)
+                mutate_type = random.choice(["has_card", "leftover_provision_min"])
+
+                if mutate_type == "has_card":
+                    has_cards = rule.conditions.get("has_card")
+
+                    if has_cards is None:
+                        rule.conditions["has_card"] = (random.choice(all_card_ids),)
+                    else:
+                        if not isinstance(has_cards, (list, tuple)):
+                            has_cards = (has_cards,)
+
+                        has_cards = list(has_cards)
+                        mutation_type = random.choice(["add", "remove", "replace"])
+
+                        if mutation_type == "add" and len(has_cards) < 5:
+                            candidates = [cid for cid in all_card_ids if cid not in has_cards]
+                            if candidates:
+                                has_cards.append(random.choice(candidates))
+
+                        elif mutation_type == "remove" and has_cards:
+                            has_cards.pop(random.randrange(len(has_cards)))
+
+                        elif mutation_type == "replace" and has_cards:
+                            idx = random.randrange(len(has_cards))
+                            candidates = [cid for cid in all_card_ids if cid not in has_cards]
+                            if candidates:
+                                has_cards[idx] = random.choice(candidates)
+
+                        if has_cards:
+                            rule.conditions["has_card"] = tuple(has_cards) if len(has_cards) > 1 else has_cards[0]
+                        else:
+                            rule.conditions.pop("has_card", None)
+
+                elif mutate_type == "leftover_provision_min":
+                    rule.conditions["leftover_provision_min"] = random.randint(4, 100)
+
+                new_rules.append(rule)
+
         return RuleSet(new_rules)
 
 
@@ -83,12 +124,17 @@ def print_ruleset_with_names(ruleset: RuleSet, card_df: pd.DataFrame) -> None:
             return card_df.loc[card_id, "name"]
         return str(card_id)
 
+    def format_card_ids(card_ids):
+        if isinstance(card_ids, (list, tuple)):
+            return tuple(get_card_name(cid) for cid in card_ids)
+        return get_card_name(card_ids)
+
     lines = []
     for i, rule in enumerate(ruleset.rules):
         cond = {}
         for k, v in rule.conditions.items():
             if k in ("has_card", "not_has_card"):
-                cond[k] = get_card_name(v)
+                cond[k] = format_card_ids(v)
             else:
                 cond[k] = v
 
@@ -112,6 +158,7 @@ def print_ruleset_with_names(ruleset: RuleSet, card_df: pd.DataFrame) -> None:
             else ""
         )
     )
+
 
 
 def crossover(parent1: RuleSet, parent2: RuleSet) -> RuleSet:

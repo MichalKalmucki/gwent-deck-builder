@@ -7,10 +7,8 @@ import random
 
 class Rule:
     def __init__(self, conditions: dict, action: dict):
-        self.conditions = (
-            conditions  # e.g., {'leader': 'Uprising', 'has_card': 'Draug'}
-        )
-        self.action = action  # e.g., {'add_card': 'Reinforcements'}
+        self.conditions = conditions
+        self.action = action
 
     def __repr__(self):
         cond_str = ", ".join(f"{k}={v!r}" for k, v in self.conditions.items())
@@ -24,11 +22,19 @@ class Rule:
             if key == "stratagem" and deck.stratagem != value:
                 return False
             if key == "has_card":
-                if not any(card.id == value for card in deck.cards):
-                    return False
+                if isinstance(value, tuple):
+                    if not all(any(card.id == v for card in deck.cards) for v in value):
+                        return False
+                else:
+                    if not any(card.id == value for card in deck.cards):
+                        return False
             if key == "not_has_card":
-                if any(card.id == value for card in deck.cards):
-                    return False
+                if isinstance(value, tuple):
+                    if any(any(card.id == v for card in deck.cards) for v in value):
+                        return False
+                else:
+                    if any(card.id == value for card in deck.cards):
+                        return False
         return True
 
     def apply(self, deck: Deck, card_pool: pd.DataFrame) -> bool:
@@ -85,17 +91,13 @@ def create_random_rule(
     leader = random.choice(list(faction.leader_abilities.keys()))
     conditions["leader"] = leader
 
-    # TODO: implement stratagem class and relation with Faction class (each faction has 1 own specific stratagem apart from neutrals)
-    # if random.random() < 1 and stratagems:
-    #     conditions["stratagem"] = random.choice(stratagems)
-
-    max_leftover = 150
-    leftover_min = random.randint(0, max_leftover)
+    max_leftover = 100
+    leftover_min = random.randint(4, max_leftover)
     leftover_max = random.randint(leftover_min, max_leftover)
     if random.random() < 0.5:
         conditions["leftover_provision_min"] = leftover_min
-    if random.random() < 0.1:
-        conditions["leftover_provision_max"] = leftover_max
+    # if random.random() < 0.1:
+    #     conditions["leftover_provision_max"] = leftover_max
 
     candidates = card_pool[
         (card_pool["faction"] == faction.name)
@@ -105,13 +107,11 @@ def create_random_rule(
     if candidates.empty:
         candidates = card_pool
 
-    has_card_candidate = candidates.sample(1).iloc[0]
-    card_id = has_card_candidate.name
-    conditions["has_card"] = card_id
+    num_has_cards = random.randint(1, 5)
+    has_card_candidates = candidates.sample(num_has_cards)
+    conditions["has_card"] = tuple(has_card_candidates.index)
 
-    card_row = candidates.sample(1).iloc[0]
-    card_id = card_row.name
-
-    action = {"add_card": card_id}
+    action_card = candidates.sample(1).iloc[0]
+    action = {"add_card": action_card.name}
 
     return Rule(conditions=conditions, action=action)

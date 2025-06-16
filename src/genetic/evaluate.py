@@ -2,7 +2,7 @@ from src.genetic.fitness import Fitness
 from src.models.faction import Faction
 from src.genetic.models.rule_set import RuleSet
 from src.models.deck import Deck
-from src.genetic.models.sampling import add_card_uniform
+from src.genetic.models.sampling import add_card_uniform, add_card_bayesian
 import pandas as pd
 import random
 
@@ -13,7 +13,7 @@ def evaluate_rule_set(
     factions: list[Faction],
     stratagems: list,
     fitness_evaluator: Fitness,
-    n: int = 20,
+    n: int = 50,
 ) -> float:
     """
     Evaluates the average fitness of decks generated using a given RuleSet.
@@ -66,4 +66,4 @@ def evaluate_rule_set(
             total_fitness += fitness_evaluator.fitness(deck) * factor
             successful_decks += 1
 
-    return total_fitness
+    return total_fitness / n
