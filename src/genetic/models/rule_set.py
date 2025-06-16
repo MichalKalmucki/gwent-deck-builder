@@ -10,6 +10,9 @@ class RuleSet:
     def __init__(self, rules: list[Rule]):
         self.rules = rules
 
+    def __len__(self):
+        return len(self.rules)
+
     def apply(self, deck: Deck, card_pool: pd.DataFrame) -> tuple[Deck, int]:
         new_deck = Deck(
             leader_ability=deck.leader_ability,
@@ -29,8 +32,14 @@ class RuleSet:
         rules_preview = ",\n  ".join(repr(rule) for rule in self.rules[:5])
         more = f", ... (+{len(self.rules) - 5} more)" if len(self.rules) > 5 else ""
         return f"<RuleSet with {len(self.rules)} rules: [\n  {rules_preview}{more}\n]>"
-    
-    def mutate(self, card_pool: pd.DataFrame, factions: list[Faction], stratagems: list, mutation_rate=0.1):
+
+    def mutate(
+        self,
+        card_pool: pd.DataFrame,
+        factions: list[Faction],
+        stratagems: list,
+        mutation_rate=0.1,
+    ):
         new_rules = []
         for rule in self.rules:
             if random.random() < mutation_rate:
@@ -104,31 +113,29 @@ def print_ruleset_with_names(ruleset: RuleSet, card_df: pd.DataFrame) -> None:
         )
     )
 
+
 def crossover(parent1: RuleSet, parent2: RuleSet) -> RuleSet:
     length = len(parent1)
-    cut_start = random.randint(0, 0.8*length)
-    cut_end = cut_start + 0.3*length  # Take a 20-rule slice
-    initial_rules = parent1.rules[cut_start:cut_end]
+    half = length // 2
 
-    seen = {id(rule) for rule in initial_rules}
-    new_rules = initial_rules[:]
+    first_half = parent1.rules[:half]
+    second_half = parent2.rules[-(length - half) :]
 
-    # unique rules from parent2
-    for rule in parent2.rules:
-        if id(rule) not in seen and len(new_rules) < length:
-            new_rules.append(rule)
+    seen = {id(rule) for rule in first_half}
+    child_rules = first_half[:]
+
+    for rule in second_half:
+        if id(rule) not in seen:
+            child_rules.append(rule)
             seen.add(id(rule))
 
-    # unique rules from parent1
-    for rule in parent1.rules:
-        if id(rule) not in seen and len(new_rules) < length:
-            new_rules.append(rule)
-            seen.add(id(rule))
+    # Pad if needed
+    if len(child_rules) < length:
+        for rule in parent2.rules + parent1.rules:
+            if id(rule) not in seen:
+                child_rules.append(rule)
+                seen.add(id(rule))
+            if len(child_rules) == length:
+                break
 
-    # pad with random rules
-    while len(new_rules) < length:
-        filler = random.choice(parent1.rules + parent2.rules)
-        if id(filler) not in seen:
-            new_rules.append(filler)
-            seen.add(id(filler))
-    return RuleSet(new_rules)
+    return RuleSet(child_rules)

@@ -92,10 +92,10 @@ def create_random_rule(
     max_leftover = 150
     leftover_min = random.randint(0, max_leftover)
     leftover_max = random.randint(leftover_min, max_leftover)
-    # if random.random() < 0.5:
-    #     conditions["leftover_provision_min"] = leftover_min
-    # if random.random() < 0.1:
-    #     conditions["leftover_provision_max"] = leftover_max
+    if random.random() < 0.5:
+        conditions["leftover_provision_min"] = leftover_min
+    if random.random() < 0.1:
+        conditions["leftover_provision_max"] = leftover_max
 
     candidates = card_pool[
         (card_pool["faction"] == faction.name)

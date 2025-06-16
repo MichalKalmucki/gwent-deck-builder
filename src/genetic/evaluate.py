@@ -43,8 +43,6 @@ def evaluate_rule_set(
         faction = random.choice(factions)
         leader = random.choice(list(faction.leader_abilities.keys()))
         stratagem = random.choice(stratagems)
-        print(f"FACTION: {faction.name}")
-        print(f"LEADER: {leader}")
         deck = Deck(
             leader_ability=leader,
             stratagem=stratagem,
@@ -65,7 +63,6 @@ def evaluate_rule_set(
 
         if len(deck.cards) == 25 and deck.is_feasible():
             # print(f"CREATED DECK: {deck}")
-            print(f"GENERATED FROM RULES: {applied_count}")
             total_fitness += fitness_evaluator.fitness(deck) * factor
             successful_decks += 1
 
